@@ -11,17 +11,17 @@ import { AlertController } from '@ionic/angular';
 export class HomePage implements OnInit{
 
   constructor(private bluetoothSerial: BluetoothSerial,private alertControler: AlertController) {}
-
-  temperatura = 0;
-  luminosidad = 0;
-  porcentaje = 0;
-  intensidad = 0;
+  
+  setPoint = 0;
+  Kc:string = '0';
+  Ti:string = '0';
+  lazo = false;
   sendCommand = 0x80;
   getCommand = 0x00;
   avaliableTemperature = false;
   avaliableLuminosity = false;
   toggleVariable = false;
-  dataMotor = new Uint8Array(4);
+  data = new Uint8Array(2);  
   dataLED = new Uint8Array(4);
   counter = 0;
   isNotConnected:Boolean = true;
@@ -34,20 +34,36 @@ export class HomePage implements OnInit{
     setInterval(()=>{this.getVariables();}, 1000);
   }
 
-  sendIntensity(){
-    this.dataLED[0] = 0x24;
-    this.dataLED[1] = this.sendCommand | 0x03;
-    this.dataLED[2] = this.intensidad;
-    this.dataLED[3] = (this.dataLED[0]+this.dataLED[1]+this.dataLED[2])%256;
-    this.setData(this.dataLED);
+  sendTi(){
+    var patt= new RegExp('^([0-9]+)\.([0-9]+)$');
+    if(patt.test(this.Kc)){
+      let dataControl = new Uint8Array(this.Ti.length + 2);
+      dataControl[0] = 0x33;
+      for (let i = 0; i < this.Ti.length; i++) {
+        dataControl[i+1] = this.Ti[i].charCodeAt(0);
+      }
+      dataControl[this.Ti.length + 1] = '$'.charCodeAt(0);
+      this.setData(dataControl)
+    }
   }
 
-  sendDutty(){
-    this.dataMotor[0] = 0x24;
-    this.dataMotor[1] = this.sendCommand | 0x02;
-    this.dataMotor[2] = this.porcentaje;
-    this.dataMotor[3] = (this.dataMotor[0]+this.dataMotor[1]+this.dataMotor[2])%256;
-    this.setData(this.dataMotor);
+  sendSetPoint(){
+    this.data[0] = (this.lazo) ? 0x31 : 0x30;
+    this.data[1] = this.setPoint;
+    this.setData(this.data);
+  }
+
+  sendKc(){
+    var patt= new RegExp('^([0-9]+)\.([0-9]+)$');
+    if(patt.test(this.Kc)){
+      let dataControl = new Uint8Array(this.Kc.length + 2);
+      dataControl[0] = 0x32;
+      for (let i = 0; i < this.Kc.length; i++) {
+        dataControl[i+1] = this.Kc[i].charCodeAt(0);
+      }
+      dataControl[this.Kc.length + 1] = '$'.charCodeAt(0);
+      this.setData(dataControl)
+    }
   }
 
   getVariables(){
@@ -77,7 +93,6 @@ export class HomePage implements OnInit{
           if (data.length == 4) {
             if (data[0]=='$') {
               if ((data[0].charCodeAt(0)+data[1].charCodeAt(0)+data[2].charCodeAt(0))%128==data[3].charCodeAt(0)) {
-                this.luminosidad = data[2].charCodeAt(0);
                 this.bluetoothSerial.clear();
                 this.avaliableLuminosity = true;
               }
@@ -104,7 +119,6 @@ export class HomePage implements OnInit{
           if (data.length == 4) {
             if (data[0]=='$') {
               if ((data[0].charCodeAt(0)+data[1].charCodeAt(0)+data[2].charCodeAt(0))%128==data[3].charCodeAt(0)) {
-                this.temperatura = data[2].charCodeAt(0);
                 this.bluetoothSerial.clear();
                 this.avaliableTemperature = true;
               }
