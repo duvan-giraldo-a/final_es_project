@@ -16,7 +16,16 @@
     </ion-toolbar>
   </ion-header>
 
-  <div id="container">
+  <div *ngIf="isNotConnected">
+    <ion-item *ngFor="let data of devices">
+      <ion-label>{{data.name}}</ion-label>
+      <ion-fab-button size="small" (click)="connect(data.address)">
+        <ion-icon name="bluetooth"></ion-icon>
+      </ion-fab-button>
+    </ion-item>
+  </div>
+
+  <div id="container" [hidden]="isNotConnected">
 
     <ion-header >
       <ion-toolbar>
@@ -76,8 +85,8 @@
         <ion-title>Controlador del Motor</ion-title>
       </ion-toolbar>
     </ion-header>
-    <form >
-      <ion-item>
+    <form>
+      <ion-item [hidden]="!lazo">
         <ion-label position="floating">Cte de proporcionalidad [Kc]</ion-label>
         <ion-input name="Kc" [(ngModel)]="Kc"></ion-input>
         <ion-buttons slot="end" >
@@ -86,7 +95,7 @@
           </ion-fab-button>
         </ion-buttons>
       </ion-item>
-      <ion-item>
+      <ion-item [hidden]="!lazo">
         <ion-label position="floating">Cte integrativa [Ti]</ion-label>
         <ion-input name="Ti" [(ngModel)]="Ti"></ion-input>
         <ion-buttons slot="end" >
@@ -112,13 +121,11 @@
         </ion-range>
       </ion-item>
     </form>
-    <div *ngIf="isNotConnected">
-      <ion-item *ngFor="let data of devices">
-        <ion-label>{{data.name}}</ion-label>
-        <ion-fab-button size="small" (click)="connect(data.address)">
-          <ion-icon name="bluetooth"></ion-icon>
-        </ion-fab-button>
-      </ion-item>
-    </div>
+    <canvas [hidden]="!lazo" #errorGraph width="400" height="400"></canvas>
+    <canvas #desiredRPMGraph [hidden]="!lazo" width="400" height="400"></canvas>
+    <canvas #rpmGraph width="400" height="400"></canvas>
+    <canvas [hidden]="!lazo" #twoLinesGraph width="400" height="400"></canvas>
   </div>
+
+
 </ion-content>
