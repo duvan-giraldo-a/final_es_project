@@ -47,8 +47,12 @@ export class HomePage implements AfterViewInit {
     this.spArray.fill(0, 0, 99);
     this.fullXAxis();
     this.setGraphs();
+    setInterval(()=>{this.checkValue();}, 500);
   }
 
+  checkValue(){
+    console.log(this.isNotConnected);
+  }
   fullXAxis() {
     let acum = 0;
     for (let index = 0; index < 100; index++) {
@@ -72,21 +76,21 @@ export class HomePage implements AfterViewInit {
     });
     const ctx1 = this.rpmGraph.nativeElement;
     const rpmData = {
-      label: 'RPM',
+      label: 'RPM sensado',
       data: [this.measuredRPM]
     };
 
     this.barRPMChart = new Chart(ctx1, {
       type: 'bar',
       data: {
-        labels: ['RPM'],
+        labels: ['RPM sensado'],
         datasets: [rpmData]
       }
     });
 
     const ctx3 = this.desiredRPMGraph.nativeElement;
     const desiredRPMData = {
-      label: 'RPM',
+      label: 'RPM deseados',
       data: [this.microSetPoint]
     };
 
@@ -274,15 +278,26 @@ export class HomePage implements AfterViewInit {
     );
   }
 
-  connect(address) {
-    this.bluetoothSerial.connect(address).subscribe(
+  connect(address){
+    this.bluetoothSerial.isEnabled().then(
       () => {
-        this.isNotConnected = false;
-      },
-      (error) => {
-        this.isNotConnected = true;
-        console.log(error);
-        this.connect(address);
+        this.bluetoothSerial.isConnected().then(
+          ()=>{
+            this.closeConnection();
+          },
+          () => {
+            this.bluetoothSerial.connect(address).subscribe(
+              () =>{
+                this.isNotConnected = false;
+              },
+              ()=>{
+                this.isNotConnected = true;
+              }
+            );
+          }
+        );
+      },() => {
+        this.showBluetoothSettings();
       }
     );
   }
